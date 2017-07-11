@@ -1,0 +1,117 @@
+service: takeaway
+provider:
+  name: aws
+  runtime: nodejs6.10
+  stage: ${opt:stage, self:custom.defaultStage}
+  profile: ${self:custom.profiles.${self:provider.stage}}
+  memorySize: 512 # Overwrite the default memory size. Default is 1024
+  versionFunctions: false # Optional function versioning
+  stackTags: # Optional CF stack tags
+    name: asklex-${self:provider.stage}
+custom:
+  defaultStage: dev
+  profiles:
+    dev: asklex-dev
+    prod: asklex-prod
+functions:
+  runCrawler:
+    handler: crawl.run
+    events:
+      - schedule: cron(30 0 * * ? *)
+  saveRestaurant:
+    handler: restaurant.save
+    events:
+      - http: post takeaway/restaurants
+  saveDish:
+    handler: dish.save
+    events:
+      - http: post takeaway/dishes
+resources:
+  Resources:
+    restaurantsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: restaurant
+        AttributeDefinitions:
+          - AttributeName: rid
+            AttributeType: B
+          #- AttributeName: name
+          #  AttributeType: S
+          #- AttributeName: status
+          #  AttributeType: S
+          #- AttributeName: phone
+          #  AttributeType: S
+          #- AttributeName: email
+          #  AttributeType: S
+          #- AttributeName: address
+          #  AttributeType: S
+          #- AttributeName: address2
+          #  AttributeType: S
+          #- AttributeName: locality
+          #  AttributeType: S
+          #- AttributeName: city
+          #  AttributeType: S
+          #- AttributeName: state
+          #  AttributeType: S
+          #- AttributeName: country
+          #  AttributeType: S
+          #- AttributeName: createdAt
+          #  AttributeType: S
+          #- AttributeName: updatedAt
+          #  AttributeType: S
+        KeySchema:
+          - AttributeName: rid
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+    dishesTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: dishes
+        AttributeDefinitions:
+          - AttributeName: rid
+            AttributeType: B
+          - AttributeName: name
+            AttributeType: S
+          #- AttributeName: types
+          #  AttributeType: SS
+          #- AttributeName: price
+          #  AttributeType: N
+          #- AttributeName: rating
+          #  AttributeType: N
+          #- AttributeName: available
+          #  AttributeType: N
+          #- AttributeName: createdAt
+          #  AttributeType: S
+          #- AttributeName: updatedAt
+          #  AttributeType: S
+        KeySchema:
+          - AttributeName: rid
+            KeyType: HASH
+          - AttributeName: name
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+    dishTLsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: dishTLs
+        AttributeDefinitions:
+          - AttributeName: typeLocality
+            AttributeType: B
+          - AttributeName: ridName
+            AttributeType: S
+          #- AttributeName: price
+          #  AttributeType: N
+          #- AttributeName: rating
+          #  AttributeType: N
+        KeySchema:
+          - AttributeName: typeLocality
+            KeyType: HASH
+          - AttributeName: ridName
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
