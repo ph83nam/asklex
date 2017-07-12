@@ -7,12 +7,12 @@ provider:
   memorySize: 512 # Overwrite the default memory size. Default is 1024
   versionFunctions: false # Optional function versioning
   stackTags: # Optional CF stack tags
-    name: asklex-${self:provider.stage}
+    name: lexofood-${self:provider.stage}
 custom:
   defaultStage: dev
   profiles:
-    dev: asklex-dev
-    prod: asklex-prod
+    dev: lexofood-dev
+    prod: lexofood-prod
 functions:
   runCrawler:
     handler: crawl.run
@@ -22,10 +22,10 @@ functions:
     handler: restaurant.save
     events:
       - http: post takeaway/restaurants
-  saveDish:
-    handler: dish.save
+  saveFood:
+    handler: food.save
     events:
-      - http: post takeaway/dishes
+      - http: post takeaway/foods
 resources:
   Resources:
     restaurantsTable:
@@ -65,16 +65,18 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
-    dishesTable:
+    foodsTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: dishes
+        TableName: foods
         AttributeDefinitions:
-          - AttributeName: rid
+          - AttributeName: fid
             AttributeType: B
           - AttributeName: name
             AttributeType: S
           #- AttributeName: types
+          #  AttributeType: SS
+          #- AttributeName: images
           #  AttributeType: SS
           #- AttributeName: price
           #  AttributeType: N
@@ -87,21 +89,21 @@ resources:
           #- AttributeName: updatedAt
           #  AttributeType: S
         KeySchema:
-          - AttributeName: rid
+          - AttributeName: fid
             KeyType: HASH
           - AttributeName: name
             KeyType: RANGE
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
-    dishTLsTable:
+    foodTLsTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: dishTLs
+        TableName: foodTLs
         AttributeDefinitions:
           - AttributeName: typeLocality
             AttributeType: B
-          - AttributeName: ridName
+          - AttributeName: fidName
             AttributeType: S
           #- AttributeName: price
           #  AttributeType: N
@@ -110,7 +112,7 @@ resources:
         KeySchema:
           - AttributeName: typeLocality
             KeyType: HASH
-          - AttributeName: ridName
+          - AttributeName: fidName
             KeyType: RANGE
         ProvisionedThroughput:
           ReadCapacityUnits: 1

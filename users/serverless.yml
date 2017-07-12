@@ -7,12 +7,12 @@ provider:
   memorySize: 512 # Overwrite the default memory size. Default is 1024
   versionFunctions: false # Optional function versioning
   stackTags: # Optional CF stack tags
-    name: asklex-${self:provider.stage}
+    name: lexofood-${self:provider.stage}
 custom:
   defaultStage: dev
   profiles:
-    dev: asklex-dev
-    prod: asklex-prod
+    dev: lexofood-dev
+    prod: lexofood-prod
 functions:
   usersCreate:
     handler: users/handler
