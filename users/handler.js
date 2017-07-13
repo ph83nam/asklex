@@ -1,5 +1,8 @@
-'use strict';
-
-exports = function(event, context, callback) {
+/**
+ * @param {object} event
+ * @param {context} context
+ * @param {function} callback
+ */
+module.exports = function(event, context, callback) {
 
 };

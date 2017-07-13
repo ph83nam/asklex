@@ -1,0 +1,42 @@
+{
+    "name": "lexofood",
+    "description": "Lex chatbot to order food in Vietnamese",
+    "version": "0.1.0",
+    "author": {
+        "name": "Nam Pham",
+        "email": "ph83nam@gmail.com"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/ph83nam/lexofood.git"
+    },
+    "homepage": "https://github.com/ph83nam/lexofood",
+    "devDependencies": {
+        "coffee-script": "1.12.4",
+        "chai": "^3.5.0",
+        "chai-as-promised": "^6.0.0",
+        "coveralls": "^2.12.0",
+        "eslint": "^3.3.1",
+        "eslint-config-airbnb": "^10.0.1",
+        "eslint-config-airbnb-base": "^5.0.2",
+        "eslint-plugin-import": "^1.13.0",
+        "eslint-plugin-jsx-a11y": "^2.1.0",
+        "eslint-plugin-react": "^6.1.1",
+        "istanbul": "^0.4.4",
+        "mocha": "^3.0.2",
+        "mocha-lcov-reporter": "^1.2.0",
+        "sinon": "^2.3.8"
+    },
+    "dependencies": {
+        "extend": "^3.0.1",
+        "aws-sdk": "^2.83.0",
+        "uuid": "^3.1.0"
+    },
+    "scripts": {
+        "test": "npm run lint && npm run coverage",
+        "lint": "eslint . --cache",
+        "coveralls": "istanbul cover -i 'lib/ss2/**' _mocha --report lcovonly -- --reporter spec --timeout 4000 test && cat coverage/lcov.info | coveralls",
+        "unit": "mocha -- test"
+    },
+    "license": "MIT"
+}
