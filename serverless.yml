@@ -10,10 +10,24 @@ provider:
     name: lexofood-${self:provider.stage}
 custom:
   defaultStage: dev
+  config: ${file(./config.yml)}
+  serverless-offline:
+    babelOptions:
+      presets: ["es2015", "stage-2"]
+    resourceRoutes: true
   profiles:
     dev: lexofood-dev
     prod: lexofood-prod
 functions:
+  messengerMessage:
+    handler: messenger/bot.message
+    events:
+      - http: post messenger
+      - http: get messenger
+    environment:
+      FB_VERIFY_TOKEN: ${self:custom.config.fbVerifyToken}
+      FB_PAGE_ACCESS_TOKEN: ${self:custom.config.fbPageAccessToken}
+      FB_API_VERSION: ${self:custom.config.fbApiVersion}
   usersCreate:
     handler: users/handler
     events:
@@ -160,3 +174,6 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
+plugins:
+  - serverless-dynamodb-local
+  - serverless-offline #serverless-offline needs to be last in the list
