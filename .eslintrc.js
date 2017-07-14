@@ -1,7 +1,10 @@
 module.exports = {
-  // "extends": "airbnb",
+  "extends": "airbnb",
   "plugins": [],
   "rules": {
+    "no-console": "off",
+    "no-eval": "off",
+    "no-unused-expressions": "off",
     "func-names": "off",
 
     // doesn't work in node v4 :(
@@ -11,7 +14,8 @@ module.exports = {
     "import/no-extraneous-dependencies" : "off"
   },
   "env": {
-       "mocha": true,
-       "jest": true
+      "es6": true,
+      "mocha": true,
+      "jest": true
    }
 };

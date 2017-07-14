@@ -3,6 +3,6 @@
  * @param {context} context
  * @param {function} callback
  */
-exports.save = function(event, context, callback) {
-
+exports.save = function (event, context, callback) {
+  callback('not implemented');
 };

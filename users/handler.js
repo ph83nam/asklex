@@ -3,6 +3,6 @@
  * @param {context} context
  * @param {function} callback
  */
-module.exports = function(event, context, callback) {
-
+module.exports = function (event, context, callback) {
+  callback('not implemented');
 };
