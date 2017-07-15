@@ -8,6 +8,19 @@ provider:
   versionFunctions: false # Optional function versioning
   stackTags: # Optional CF stack tags
     name: lexofood-${self:provider.stage}
+  environment:
+    REDIS_URL: {"Fn::Join" : ["", ["redis://", {"Fn::GetAtt" : ["cacheCluster", "RedisEndpoint.Address"]}, ":", {"Fn::GetAtt" : ["cacheCluster", "RedisEndpoint.Port"]}]]}
+  iamRoleStatements: # permissions for all of your functions can be set here
+    - Effect: Allow
+      Action: # Gives permission to DynamoDB tables in a specific region
+        - dynamodb:DescribeTable
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:us-east-1:*:*"
 custom:
   defaultStage: dev
   config: ${file(./config.yml)}
@@ -58,6 +71,35 @@ functions:
       - http: post takeaway/foods
 resources:
   Resources:
+    #cacheSecurityGroup:
+    #  Type: "AWS::EC2::SecurityGroup"
+    #  Properties:
+    #    GroupDescription: "Elasticache Security Group"
+    #    SecurityGroupIngress:
+    #      -
+    #        IpProtocol: "tcp"
+    #        FromPort: "6379"
+    #        ToPort: "6379"
+    #        SourceSecurityGroupName:
+    #          Ref: "InstanceSecurityGroup"
+    cacheSecurityGroup:
+      Type: "AWS::ElastiCache::SecurityGroup"
+      Properties:
+        Description: String
+    cacheCluster:
+      Type: "AWS::ElastiCache::CacheCluster"
+      Properties:
+        AutoMinorVersionUpgrade: "true"
+        Engine: "redis"
+        CacheNodeType: "cache.t2.micro"
+        NumCacheNodes: "1"
+        CacheSecurityGroupNames:
+          - {"Ref": "cacheSecurityGroup"}
+    #    VpcSecurityGroupIds:
+    #      -
+    #        Fn::GetAtt:
+    #          - "cacheSecurityGroup"
+    #          - "GroupId"
     usersTable:
       Type: AWS::DynamoDB::Table
       Properties:
