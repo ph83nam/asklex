@@ -18,7 +18,7 @@ function getUser(userId, platform, callback) {
       '#id': 'uid',
     },
     ExpressionAttributeValues: {
-      ':uid': `${userId}:${platform || '*'}`,
+      ':uid': platform ? `${userId}:${platform}` : userId,
     },
   };
   db.query(params, (err, data) => {
@@ -27,7 +27,6 @@ function getUser(userId, platform, callback) {
       callback(err);
     } else if (data.Items.length === 0) {
       callback('NOT_FOUND');
-      logger.info('Query succeeded.');
     } else {
       callback(null, data.Items[0]);
     }
@@ -36,6 +35,7 @@ function getUser(userId, platform, callback) {
 
 /**
  * @param {object} user
+ * @param {function} callback
  */
 function saveUser(user, callback) {
   const item = user;

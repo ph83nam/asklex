@@ -9,6 +9,7 @@ describe('users/dao', () => {
     lastName: 'Test',
     email: 'tester@nodejs.unit',
   };
+
   // user create
   it('#save:create', (done) => {
     dao.saveUser(user, (error, success) => {
@@ -17,6 +18,24 @@ describe('users/dao', () => {
       done();
     });
   });
+
+  // user get
+  it('#get', (done) => {
+    dao.getUser(user.uid, null, (error, data) => {
+      expect(error).to.be.null;
+      expect(data.firstName).to.equal(user.firstName);
+      done();
+    });
+  });
+
+  // user get NOT_FOUND
+  it('#get:NOT_FOUND', (done) => {
+    dao.getUser('NOT_SAVED', null, (error) => {
+      expect(error).to.equal('NOT_FOUND');
+      done();
+    });
+  });
+
   // user update
   it('#save:update', (done) => {
     user.firstName = 'Updated';
