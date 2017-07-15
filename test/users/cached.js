@@ -3,6 +3,10 @@ import * as cached from '../../users/cached';
 import * as redis from '../../lib/redis';
 
 describe('users/cached', () => {
+  // configure library with hooks
+  before(() => cached.forceWaitForCache(true));
+  after(() => cached.forceWaitForCache(false));
+
   const userId = `${(new Date()).getTime()}`.split('').reverse().join('');
 
   const user = {
