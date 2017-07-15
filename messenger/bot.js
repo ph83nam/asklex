@@ -1,8 +1,9 @@
+import extend from 'extend';
+import request from 'request';
+
 const PAGE_ACCESS_TOKEN = process.env.FB_PAGE_ACCESS_TOKEN;
 const VERIFY_TOKEN = process.env.FB_VERIFY_TOKEN;
 const API_VERSION = process.env.FB_API_VERSION || '2.9';
-const extend = require('extend');
-const request = require('request');
 
 /**
  * http request

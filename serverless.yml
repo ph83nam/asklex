@@ -61,10 +61,10 @@ resources:
     usersTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: usersTable
+        TableName: users
         AttributeDefinitions:
           - AttributeName: uid
-            AttributeType: B
+            AttributeType: S
           #- AttributeName: firstName
           #  AttributeType: S
           #- AttributeName: lastName
@@ -91,10 +91,12 @@ resources:
         TableName: restaurant
         AttributeDefinitions:
           - AttributeName: rid
-            AttributeType: B
+            AttributeType: S
           #- AttributeName: name
           #  AttributeType: S
           #- AttributeName: status
+          #  AttributeType: S
+          #- AttributeName: locale
           #  AttributeType: S
           #- AttributeName: phone
           #  AttributeType: S
@@ -128,7 +130,7 @@ resources:
         TableName: foods
         AttributeDefinitions:
           - AttributeName: fid
-            AttributeType: B
+            AttributeType: S
           - AttributeName: name
             AttributeType: S
           #- AttributeName: types
@@ -159,7 +161,7 @@ resources:
         TableName: foodTLs
         AttributeDefinitions:
           - AttributeName: typeLocality
-            AttributeType: B
+            AttributeType: S
           - AttributeName: fidName
             AttributeType: S
           #- AttributeName: price
