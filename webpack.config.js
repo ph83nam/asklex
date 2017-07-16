@@ -13,19 +13,19 @@ module.exports = {
         loader: 'babel-loader',
         query: {
           presets: [
-            /* [
+            [
               'env',
               {
-                target: { node: '6.10' }, // Node version on AWS Lambda 
+                targets: { node: '6.10' }, // Node version on AWS Lambda 
                 useBuiltIns: true,
                 modules: false,
                 loose: true,
               },
-            ], */
+            ],
             'es2015',
             'stage-2',
           ],
-          // plugins: ['transform-runtime'],
+          plugins: ['transform-runtime'],
         },
       },
     ],
