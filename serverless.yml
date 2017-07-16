@@ -4,16 +4,65 @@ provider:
   runtime: nodejs6.10
   stage: ${opt:stage, self:custom.defaultStage}
   profile: ${self:custom.profiles.${self:provider.stage}}
-  memorySize: 512 # Overwrite the default memory size. Default is 1024
+  memorySize: 256 # Overwrite the default memory size. Default is 1024
+  timeout: ${self:custom.${self:provider.stage}.lambdaTimeout, "5"} # default is 6
   versionFunctions: false # Optional function versioning
   stackTags: # Optional CF stack tags
     name: lexofood-${self:provider.stage}
+  environment:
+    DYNAMO_TABLE_PREFIX: ${self:provider.stage}-
+    REDIS_URL: { Fn::Join : ["", ["redis://", { Fn::GetAtt : [cacheCluster, "RedisEndpoint.Address"]}, ":", { Fn::GetAtt : [cacheCluster, "RedisEndpoint.Port"]}]]}
+  iamRoleStatements: # permissions for all of your functions can be set here
+    - Effect: Allow
+      Action: # Gives permission to DynamoDB tables in a specific region
+        - dynamodb:DescribeTable
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:us-east-1:*:*"
+    - Effect: Allow
+      Action: # Gives permission to attach to a VPC network
+        - ec2:CreateNetworkInterface
+        - ec2:DescribeNetworkInterfaces
+        - ec2:DeleteNetworkInterface
+      Resource: "arn:aws:ec2:us-east-1:*:network-interface/*"
+  vpc:
+    securityGroupIds:
+      - { Ref : lambdaExecSecurityGroup }
+    subnetIds:
+      - { Ref : subnetAPrivate }
+      - { Ref : subnetBPrivate }
+      - { Ref : subnetCPrivate }
 custom:
   defaultStage: dev
+  config: ${file(./config.yml)}
+  serverless-offline:
+    babelOptions:
+      presets: ["es2015", "stage-2"]
+    resourceRoutes: true
+  webpack:
+    config: ./webpack.config.js
   profiles:
     dev: lexofood-dev
     prod: lexofood-prod
+  dev:
+    vpcCidrPrefix: 10.101
+    lambdaTimeout: 2
+  prod:
+    vpcCidrPrefix: 10.100
 functions:
+  messengerMessage:
+    handler: messenger/bot.message
+    events:
+      - http: post messenger
+      - http: get messenger
+    environment:
+      FB_VERIFY_TOKEN: ${self:custom.config.fbVerifyToken}
+      FB_PAGE_ACCESS_TOKEN: ${self:custom.config.fbPageAccessToken}
+      FB_API_VERSION: ${self:custom.config.fbApiVersion}
   usersCreate:
     handler: users/handler
     events:
@@ -31,7 +80,7 @@ functions:
     events:
       - http: delete users
   runCrawler:
-    handler: takeaway/crawl.run
+    handler: takeaway/crawler.run
     events:
       - schedule: cron(30 0,6,12 * * ? *)
   saveRestaurant:
@@ -44,27 +93,210 @@ functions:
       - http: post takeaway/foods
 resources:
   Resources:
+    botVpc:
+      Type: "AWS::EC2::VPC"
+      Properties: 
+        CidrBlock: "${self:custom.${self:provider.stage}.vpcCidrPrefix}.0.0/16"
+        EnableDnsSupport: true
+        EnableDnsHostnames: true
+        InstanceTenancy: default
+        Tags:
+          - Key: "Name"
+            Value: "lexofood-vpc-${self:provider.stage}"
+    subnetAPublic: 
+      Type: "AWS::EC2::Subnet"
+      Properties:
+        AvailabilityZone: { Fn::Select : ["0", { Fn::GetAZs : "" }]}
+        CidrBlock: "${self:custom.${self:provider.stage}.vpcCidrPrefix}.0.0/20"
+        VpcId: { Ref: botVpc }
+        MapPublicIpOnLaunch: true
+        Tags: 
+          - Key: "Name"
+            Value: "A Public"
+          - Key: "Reach"
+            Value: "public"
+    subnetBPublic: 
+      Type: "AWS::EC2::Subnet"
+      Properties:
+        AvailabilityZone: { Fn::Select : ["1", { Fn::GetAZs : "" }]}
+        CidrBlock: "${self:custom.${self:provider.stage}.vpcCidrPrefix}.16.0/20"
+        VpcId: { Ref : botVpc }
+        MapPublicIpOnLaunch: true
+        Tags: 
+          - Key: "Name"
+            Value: "B Public"
+          - Key: "Reach"
+            Value: "public"
+    subnetCPublic:
+      Type: "AWS::EC2::Subnet"
+      Properties:
+        AvailabilityZone: { Fn::Select : ["2", { Fn::GetAZs : "" }] }
+        CidrBlock: "${self:custom.${self:provider.stage}.vpcCidrPrefix}.32.0/20"
+        VpcId: { Ref : botVpc }
+        MapPublicIpOnLaunch: true
+        Tags: 
+          - Key: "Name"
+            Value: "C Public"
+          - Key: "Reach"
+            Value: "public"
+    subnetAPrivate: 
+      Type: "AWS::EC2::Subnet"
+      Properties:
+        AvailabilityZone: { Fn::Select : ["0", { Fn::GetAZs : "" }]}
+        CidrBlock: "${self:custom.${self:provider.stage}.vpcCidrPrefix}.48.0/20"
+        VpcId: { Ref: botVpc }
+        Tags: 
+          - Key: "Name"
+            Value: "A Private"
+          - Key: "Reach"
+            Value: "private"
+    subnetBPrivate: 
+      Type: "AWS::EC2::Subnet"
+      Properties:
+        AvailabilityZone: { Fn::Select : ["1", { Fn::GetAZs : "" }]}
+        CidrBlock: "${self:custom.${self:provider.stage}.vpcCidrPrefix}.64.0/20"
+        VpcId: { Ref: botVpc }
+        Tags: 
+          - Key: "Name"
+            Value: "B Private"
+          - Key: "Reach"
+            Value: "private"
+    subnetCPrivate: 
+      Type: "AWS::EC2::Subnet"
+      Properties:
+        AvailabilityZone: { Fn::Select : ["2", { Fn::GetAZs : "" }]}
+        CidrBlock: "${self:custom.${self:provider.stage}.vpcCidrPrefix}.80.0/20"
+        VpcId: { Ref: botVpc }
+        Tags: 
+          - Key: "Name"
+            Value: "C Private"
+          - Key: "Reach"
+            Value: "private"
+    routeTablePublic:
+      Type: "AWS::EC2::RouteTable"
+      Properties:
+        VpcId: { Ref : botVpc }
+        Tags:
+          - Key: "Name"
+            Value: "Public Route"
+    routePublicAssociationA:
+      Type: "AWS::EC2::SubnetRouteTableAssociation"
+      Properties: 
+        RouteTableId: { Ref : routeTablePublic }
+        SubnetId: { Ref : subnetAPublic }
+    routePublicAssociationB:
+      Type: "AWS::EC2::SubnetRouteTableAssociation"
+      Properties: 
+        RouteTableId: { Ref : routeTablePublic }
+        SubnetId: { Ref : subnetBPublic }
+    routePublicAssociationC:
+      Type: "AWS::EC2::SubnetRouteTableAssociation"
+      Properties: 
+        RouteTableId: { Ref : routeTablePublic }
+        SubnetId: { Ref : subnetCPublic }
+    routeTablePrivate:
+      Type: "AWS::EC2::RouteTable"
+      Properties:
+        VpcId: { Ref : botVpc }
+        Tags:
+          - Key: "Name"
+            Value: "Private Route"
+    routePrivateAssociationA:
+      Type: "AWS::EC2::SubnetRouteTableAssociation"
+      Properties: 
+        RouteTableId: { Ref : routeTablePrivate }
+        SubnetId: { Ref : subnetAPrivate }
+    routePrivateAssociationB:
+      Type: "AWS::EC2::SubnetRouteTableAssociation"
+      Properties: 
+        RouteTableId: { Ref : routeTablePrivate }
+        SubnetId: { Ref : subnetBPrivate }
+    routePrivateAssociationC:
+      Type: "AWS::EC2::SubnetRouteTableAssociation"
+      Properties: 
+        RouteTableId: { Ref : routeTablePrivate }
+        SubnetId: { Ref : subnetCPrivate }
+    internetGateway: 
+      Type: "AWS::EC2::InternetGateway"
+      Properties:
+        Tags:
+          - Key: "Name"
+            Value: "botInternetGateway"
+    vpcGatewayAttachment:
+      Type: "AWS::EC2::VPCGatewayAttachment"
+      Properties: 
+        VpcId: { Ref : botVpc }
+        InternetGatewayId: { Ref : internetGateway }
+    eip1:
+      Type: "AWS::EC2::EIP"
+      Properties:
+        Domain: vpc
+    natGatewayA:
+      Type: "AWS::EC2::NatGateway"
+      Properties: 
+        AllocationId: { Fn::GetAtt : [eip1, "AllocationId"] }
+        SubnetId: { Ref : subnetAPublic }
+    routeTablePublicInternetRoute:
+      Type: "AWS::EC2::Route"
+      DependsOn: vpcGatewayAttachment
+      Properties: 
+        RouteTableId: { Ref : routeTablePublic }
+        DestinationCidrBlock: "0.0.0.0/0"
+        GatewayId: { Ref : internetGateway }
+    routeTablePrivateInternetRoute:
+      Type: "AWS::EC2::Route"
+      Properties: 
+        RouteTableId: { Ref : routeTablePrivate }
+        DestinationCidrBlock: "0.0.0.0/0"
+        NatGatewayId: { Ref : natGatewayA }
+    lambdaExecSecurityGroup:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupDescription: "Lambda Execution"
+        SecurityGroupEgress:
+          - IpProtocol: -1
+            CidrIp: 0.0.0.0/0
+        SecurityGroupIngress:
+          - IpProtocol: -1
+            CidrIp: 0.0.0.0/0
+        VpcId: { Ref : botVpc }
+    cacheSecurityGroup:
+      Type: "AWS::EC2::SecurityGroup"
+      Properties:
+        GroupDescription: "Elasticache Security Group"
+        SecurityGroupIngress:
+          - IpProtocol: tcp
+            FromPort: 6379
+            ToPort: 6379
+            SourceSecurityGroupId: { Ref : lambdaExecSecurityGroup }
+            # CidrIp: { "Fn::GetAtt" : ["botVpc", "CidrBlock"] }
+        VpcId: { Ref : botVpc }
+    cacheSubnetGroup:
+      Type: "AWS::ElastiCache::SubnetGroup"
+      Properties:
+        CacheSubnetGroupName: "cacheSubnetGroup-${self:provider.stage}"
+        Description: "subnet group for lexofood"
+        SubnetIds: # todo: consider moving it to a different network layer
+          - { Ref : subnetAPrivate }
+          - { Ref : subnetBPrivate }
+          - { Ref : subnetCPrivate }
+    cacheCluster:
+      Type: "AWS::ElastiCache::CacheCluster"
+      Properties:
+        AutoMinorVersionUpgrade: true
+        Engine: redis
+        CacheNodeType: "cache.t2.micro"
+        NumCacheNodes: 1
+        CacheSubnetGroupName: { Ref : cacheSubnetGroup }
+        VpcSecurityGroupIds:
+          - { Fn::GetAtt : [cacheSecurityGroup, GroupId] }
     usersTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: usersTable
+        TableName: ${self:provider.stage}-users
         AttributeDefinitions:
           - AttributeName: uid
-            AttributeType: B
-          #- AttributeName: firstName
-          #  AttributeType: S
-          #- AttributeName: lastName
-          #  AttributeType: S
-          #- AttributeName: sex
-          #  AttributeType: S
-          #- AttributeName: email
-          #  AttributeType: S
-          #- AttributeName: mobile
-          #  AttributeType: S
-          #- AttributeName: createdAt
-          #  AttributeType: S
-          #- AttributeName: updatedAt
-          #  AttributeType: S
+            AttributeType: S
         KeySchema:
           - AttributeName: uid
             KeyType: HASH
@@ -74,34 +306,10 @@ resources:
     restaurantsTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: restaurant
+        TableName: ${self:provider.stage}-restaurants
         AttributeDefinitions:
           - AttributeName: rid
-            AttributeType: B
-          #- AttributeName: name
-          #  AttributeType: S
-          #- AttributeName: status
-          #  AttributeType: S
-          #- AttributeName: phone
-          #  AttributeType: S
-          #- AttributeName: email
-          #  AttributeType: S
-          #- AttributeName: address
-          #  AttributeType: S
-          #- AttributeName: address2
-          #  AttributeType: S
-          #- AttributeName: locality
-          #  AttributeType: S
-          #- AttributeName: city
-          #  AttributeType: S
-          #- AttributeName: state
-          #  AttributeType: S
-          #- AttributeName: country
-          #  AttributeType: S
-          #- AttributeName: createdAt
-          #  AttributeType: S
-          #- AttributeName: updatedAt
-          #  AttributeType: S
+            AttributeType: S
         KeySchema:
           - AttributeName: rid
             KeyType: HASH
@@ -111,26 +319,12 @@ resources:
     foodsTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: foods
+        TableName: ${self:provider.stage}-foods
         AttributeDefinitions:
           - AttributeName: fid
-            AttributeType: B
+            AttributeType: S
           - AttributeName: name
             AttributeType: S
-          #- AttributeName: types
-          #  AttributeType: SS
-          #- AttributeName: images
-          #  AttributeType: SS
-          #- AttributeName: price
-          #  AttributeType: N
-          #- AttributeName: rating
-          #  AttributeType: N
-          #- AttributeName: available
-          #  AttributeType: N
-          #- AttributeName: createdAt
-          #  AttributeType: S
-          #- AttributeName: updatedAt
-          #  AttributeType: S
         KeySchema:
           - AttributeName: fid
             KeyType: HASH
@@ -142,16 +336,12 @@ resources:
     foodTLsTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: foodTLs
+        TableName: ${self:provider.stage}-foodTLs
         AttributeDefinitions:
           - AttributeName: typeLocality
-            AttributeType: B
+            AttributeType: S
           - AttributeName: fidName
             AttributeType: S
-          #- AttributeName: price
-          #  AttributeType: N
-          #- AttributeName: rating
-          #  AttributeType: N
         KeySchema:
           - AttributeName: typeLocality
             KeyType: HASH
@@ -160,3 +350,7 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
+plugins:
+  - serverless-plugin-webpack
+  - serverless-dynamodb-local
+  - serverless-offline #serverless-offline needs to be last in the list

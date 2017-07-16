@@ -1,5 +1,10 @@
-'use strict';
+/**
+ * @param {object} event
+ * @param {context} context
+ * @param {function} callback
+ */
+function run(event, context, callback) {
+  callback('not implemented');
+}
 
-exports.run = function(event, context, callback) {
-
-};
+export { run as default, run };
