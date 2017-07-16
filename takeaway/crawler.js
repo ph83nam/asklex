@@ -3,6 +3,8 @@
  * @param {context} context
  * @param {function} callback
  */
-exports.run = function (event, context, callback) {
+function run(event, context, callback) {
   callback('not implemented');
-};
+}
+
+export { run as default, run };

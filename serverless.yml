@@ -4,7 +4,7 @@ provider:
   runtime: nodejs6.10
   stage: ${opt:stage, self:custom.defaultStage}
   profile: ${self:custom.profiles.${self:provider.stage}}
-  memorySize: 512 # Overwrite the default memory size. Default is 1024
+  memorySize: 256 # Overwrite the default memory size. Default is 1024
   versionFunctions: false # Optional function versioning
   stackTags: # Optional CF stack tags
     name: lexofood-${self:provider.stage}
@@ -29,6 +29,8 @@ custom:
     babelOptions:
       presets: ["es2015", "stage-2"]
     resourceRoutes: true
+  webpack:
+    config: ./webpack.config.js
   profiles:
     dev: lexofood-dev
     prod: lexofood-prod
@@ -59,7 +61,7 @@ functions:
     events:
       - http: delete users
   runCrawler:
-    handler: takeaway/crawl.run
+    handler: takeaway/crawler.run
     events:
       - schedule: cron(30 0,6,12 * * ? *)
   saveRestaurant:
@@ -220,5 +222,6 @@ resources:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
 plugins:
+  - serverless-plugin-webpack
   - serverless-dynamodb-local
   - serverless-offline #serverless-offline needs to be last in the list

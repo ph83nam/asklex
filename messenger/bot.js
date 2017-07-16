@@ -142,6 +142,7 @@ function respondWithText(callback, text) {
     headers: {},
     body: text,
   };
+  logger.debug('response with text:', text);
   callback(null, resp);
 }
 
@@ -173,31 +174,39 @@ function identifyUser(userId, callback) {
 
 /**
  * response received from Lex
+ * @param {function} callback
  * @param {string} userId
  * @param {object} error
  * @param {object} resp
  */
-function onLexResponse(userId, error, resp) {
+function onLexResponse(callback, userId, error, resp) {
   if (error) {
-    sendTextMessage(userId, `Lex error; ${error.message || 'unknown'}`);
+    const msg = `Lex error: ${error.message || error}`;
+    const wrapper = callback ? callback.bind(this, error, resp) : null;
+    sendTextMessage(userId, msg, wrapper);
   } else {
     logger.debug('Lex response', resp);
     // @todo convert Lex response to Message message
+    if (typeof callback === 'function') callback(error, resp);
   }
 }
 
 /**
  * message payload received
  * @param {object} event
+ * @param {function} callback
  */
-function onMessageEvent(event) {
+function onMessageEvent(event, callback) {
+  const lexCb = onLexResponse.bind(this, callback, event.sender.id);
   // identifyUser
   identifyUser(event.sender.id, (error, user) => {
     if (error) {
-      sendTextMessage(event.sender.id, `System error: ${error.message || 'unknown'}`);
+      sendTextMessage(event.sender.id,
+        `System error: ${error.message || 'unknown'}`,
+        callback.bind(this, error));
     } else if (event.message.text) {
       // invoke Lex with text
-      lex('text', event.message.text, user, onLexResponse.bind(event.sender.id));
+      lex('text', event.message.text, user, lexCb);
     } else if (event.message.attachments) {
       const attachment = event.message.attachments[0];
       if (attachment.type === 'audio') {
@@ -207,9 +216,12 @@ function onMessageEvent(event) {
           users.saveUser(user);
         }
         // invoke Lex with audio
-        lex('audio', attachment.url, user, onLexResponse.bind(event.sender.id));
+        lex('audio', attachment.url, user, lexCb);
       } else {
-        sendTextMessage(event.sender.id, 'I cannot process your attachment!');
+        sendTextMessage(
+          event.sender.id,
+          'I cannot process your attachment!',
+          callback.bind(this, error));
       }
     }
   });
@@ -224,21 +236,51 @@ function onMessageEvent(event) {
 function onPageMessage(event, context, callback) {
   const data = typeof event.body === 'object' ? event.body : JSON.parse(event.body);
   if (data.object === 'page') {
-    // Iterate over each entry - there may be multiple if batched
-    data.entry.forEach((entry) => {
-      // Iterate over each messaging event
-      entry.messaging.forEach((me) => {
-        if (me.message) {
+    let index = -1;
+    const errList = [];
+    const resList = [];
+    const eventCb = (error, response) => {
+      if (error !== undefined || response !== undefined) {
+        if (error) errList.push(error);
+        if (response) resList.push(response);
+      }
+      if (++index < data.entry.length) {
+        // invoke next entry
+        const me = data.entry[index];
+        if (me.messaging && me.messaging.length === 1) {
           // Handle the message
-          onMessageEvent(me);
+          onMessageEvent(me.messaging[0], eventCb);
         } else {
-          logger.warn('Webhook received unknown event: ', me);
+          logger.warn('Webhook received unknown event:', me);
+          eventCb();
         }
-      });
-    });
+      } else {
+        // end execution
+        logger.debug('message:', data, 'errList:', errList, 'resList:', resList);
+        let msg;
+        if (errList.length > 0 || resList.length === 0) {
+          // return error or mixed
+          msg = {
+            type: resList.length > 0 ? 'mixed' : 'error',
+            errorList: errList,
+            responseList: resList,
+          };
+        } else {
+          // return success
+          msg = {
+            type: 'success',
+            responseList: resList,
+          };
+        }
+        respondWithText(callback, msg);
+      }
+    };
+    eventCb();
+  } else {
+    // log for review
+    logger.warn('received unknown object', data);
+    respondWithText(callback, 'confused');
   }
-
-  respondWithText(callback, 'received');
 }
 
 /**
@@ -267,7 +309,7 @@ function onPageSubcribe(event, context, callback) {
  * @param {function} callback
  */
 function onMessage(event, context, callback) {
-  console.log('message', event, context, callback);
+  logger.debug('message', event, context, callback);
   const params = event.queryStringParameters || {};
   // handle webhook mode
   if (params['hub.mode'] === 'subscribe') {

@@ -1,7 +1,9 @@
 import { expect } from 'chai';
 import * as bot from '../../messenger/bot';
+import * as lambda from '../lib/lambda';
 
 const FB_USER_ID = process.env.FB_USER_ID;
+const FB_PAGE_ID = process.env.FB_PAGE_ID;
 const FB_VERIFY_TOKEN = process.env.FB_VERIFY_TOKEN;
 
 describe('bot', () => {
@@ -54,6 +56,43 @@ describe('bot', () => {
     bot.message(event, context, (error, response) => {
       expect(error).to.be.null;
       expect(response.body).to.equal('1234567890');
+    });
+  });
+});
+
+// test real message pageload
+describe('bot-message', () => {
+  it('hi', (done) => {
+    const body = {
+      object: 'page',
+      entry: [{
+        id: '218580821997521',
+        time: (new Date()).getTime(),
+        messaging: [
+          {
+            sender: { id: FB_USER_ID },
+            recipient: { id: FB_PAGE_ID },
+            timestamp: (new Date()).getTime() - 1000,
+            message: {
+              mid: 'mid.$cAADGzHNJiWhjetsGQVdSZW9e4HJx',
+              seq: 13219,
+              text: 'Hi',
+            },
+          },
+        ],
+      }],
+    };
+    const event = lambda.getEventObject(body);
+    bot.message(event, lambda.getContextObject(), (error, response) => {
+      expect(error).to.be.null;
+      expect(response).not.to.be.empty;
+      expect(response.statusCode).to.eq(200);
+      expect(response.body).instanceof(Object);
+
+      // verify response
+      const resp = response.body;
+      expect(resp.type).to.eq('error'); // @todo: change to equal 'success'
+      done();
     });
   });
 });
