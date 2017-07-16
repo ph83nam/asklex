@@ -1,5 +1,6 @@
 import extend from 'extend';
 import * as redis from '../lib/redis';
+import logger from '../lib/log';
 import * as dao from './dao';
 
 let waitForCache = false;
@@ -34,6 +35,7 @@ function getUser(userId, platform, callback) {
   const key = ['user:', platformId].join('');
   redis.get(key, (error, data) => {
     if (error || !data) {
+      logger.debug(`loading user ${platformId} from database`);
       // get from database
       dao.getUser(platformId, null, (err, dat) => {
         if (!err && dat) {
