@@ -8,7 +8,7 @@ describe('bot', () => {
   it('#getUserProfile', (done) => {
     bot.getUserProfile(FB_USER_ID, (error, success) => {
       expect(error).to.be.null;
-      expect(success).to.haveOwnProperty('first_name');
+      expect(success).to.haveOwnProperty('firstName');
       done();
     });
   });

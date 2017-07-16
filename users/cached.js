@@ -13,6 +13,17 @@ function forceWaitForCache(wait) {
 }
 
 /**
+ * store user in the cache
+ * @param {object} user
+ * @param {function} callback
+ */
+function cacheUser(user, callback) {
+  redis.set(`user:${user.uid}`, JSON.stringify(user), (error, data) => {
+    if (callback) callback(error, data);
+  });
+}
+
+/**
  * get user object
  * @param {string} userId
  * @param {string|null} platform
@@ -27,7 +38,7 @@ function getUser(userId, platform, callback) {
       dao.getUser(platformId, null, (err, dat) => {
         if (!err && dat) {
           // cache result for later access
-          redis.set(key, JSON.stringify(dat));
+          cacheUser(dat);
         }
         // invoke callback
         callback(err, dat);
@@ -50,9 +61,7 @@ function saveUser(user, callback) {
       redis.get(key, (err, dat) => {
         if (err) return;
         const cache = dat ? extend(dat, user) : user;
-        redis.set(key, JSON.stringify(cache), () => {
-          if (callback && waitForCache) callback(error, data);
-        });
+        cacheUser(cache, waitForCache ? callback : null);
       });
     }
 
@@ -63,4 +72,5 @@ function saveUser(user, callback) {
 
 export { getUser, saveUser };
 export { forceWaitForCache };
+export { cacheUser };
 

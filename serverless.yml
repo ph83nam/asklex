@@ -9,6 +9,7 @@ provider:
   stackTags: # Optional CF stack tags
     name: lexofood-${self:provider.stage}
   environment:
+    DYNAMO_TABLE_PREFIX: ${self:provider.stage}-
     REDIS_URL: {"Fn::Join" : ["", ["redis://", {"Fn::GetAtt" : ["cacheCluster", "RedisEndpoint.Address"]}, ":", {"Fn::GetAtt" : ["cacheCluster", "RedisEndpoint.Port"]}]]}
   iamRoleStatements: # permissions for all of your functions can be set here
     - Effect: Allow
@@ -103,7 +104,7 @@ resources:
     usersTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: users
+        TableName: ${self:provider.stage}-users
         AttributeDefinitions:
           - AttributeName: uid
             AttributeType: S
@@ -130,7 +131,7 @@ resources:
     restaurantsTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: restaurant
+        TableName: ${self:provider.stage}-restaurants
         AttributeDefinitions:
           - AttributeName: rid
             AttributeType: S
@@ -169,7 +170,7 @@ resources:
     foodsTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: foods
+        TableName: ${self:provider.stage}-foods
         AttributeDefinitions:
           - AttributeName: fid
             AttributeType: S
@@ -200,7 +201,7 @@ resources:
     foodTLsTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: foodTLs
+        TableName: ${self:provider.stage}-foodTLs
         AttributeDefinitions:
           - AttributeName: typeLocality
             AttributeType: S

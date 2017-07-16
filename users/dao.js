@@ -1,7 +1,7 @@
 import logger from '../lib/log';
 import { getDynamoDb } from '../lib/aws';
 
-const TABLE_USERS = 'users';
+const TABLE_USERS = `${process.env.DYNAMO_TABLE_PREFIX || 'table'}users`;
 const db = getDynamoDb();
 
 /**
