@@ -25,11 +25,14 @@ function callGraphApi(path, data, callback, method) {
       accept: 'application/json',
     },
   };
+
+  // prepare data
   if (!method || method === 'GET') {
     if (data) extend(params, data);
   } else {
     opts.json = data;
   }
+
   // callback wrapper
   const cb = function (error, success) {
     let err = error;
@@ -54,6 +57,9 @@ function callGraphApi(path, data, callback, method) {
     }
     if (callback) callback(err, resp);
   };
+
+  // invoke request
+  logger.debug('calling graph API', opts);
   return request(opts, cb);
 }
 
@@ -139,10 +145,14 @@ function getUserProfile(userId, callback) {
 function respondWithText(callback, text) {
   const resp = {
     statusCode: 200,
-    headers: {},
+    headers: {
+      'Content-Type': typeof text === 'object' ?
+        'application/json' : 'text/plain',
+    },
     body: text,
   };
-  logger.debug('response with text:', text);
+  process.emit('done');
+  logger.debug('response with text/object:', text);
   callback(null, resp);
 }
 
@@ -159,7 +169,9 @@ function identifyUser(userId, callback) {
         getUserProfile(userId, (err, dat) => {
           if (!err) {
             // cache user data for later access
-            users.cacheUser(dat);
+            if (typeof users.cacheUser === 'function') {
+              users.cacheUser(dat);
+            }
           }
           callback(err, dat);
         });
@@ -201,10 +213,16 @@ function onMessageEvent(event, callback) {
   // identifyUser
   identifyUser(event.sender.id, (error, user) => {
     if (error) {
+      logger.debug('failed to identify facebook user event.sender.id', error);
       sendTextMessage(event.sender.id,
         `System error: ${error.message || 'unknown'}`,
         callback.bind(this, error));
-    } else if (event.message.text) {
+      return;
+    }
+
+    // process message for user
+    logger.debug('received message from', user);
+    if (event.message.text) {
       // invoke Lex with text
       lex('text', event.message.text, user, lexCb);
     } else if (event.message.attachments) {
