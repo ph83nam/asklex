@@ -145,11 +145,11 @@ function getUserProfile(userId, callback) {
 function respondWithText(callback, text) {
   const resp = {
     statusCode: 200,
-    headers: {
+    /* headers: {
       'Content-Type': typeof text === 'object' ?
         'application/json' : 'text/plain',
-    },
-    body: text,
+    }, */
+    body: typeof text === 'object' && !callback.test ? JSON.stringify(text) : text,
   };
   process.emit('done');
   logger.debug('response with text/object:', text);
