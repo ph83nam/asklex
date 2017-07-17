@@ -83,7 +83,7 @@ describe('bot-message', () => {
       }],
     };
     const event = lambda.getEventObject(body);
-    bot.message(event, lambda.getContextObject(), (error, response) => {
+    const testCb = (error, response) => {
       expect(error).to.be.null;
       expect(response).not.to.be.empty;
       expect(response.statusCode).to.eq(200);
@@ -93,6 +93,8 @@ describe('bot-message', () => {
       const resp = response.body;
       expect(resp.type).to.eq('error'); // @todo: change to equal 'success'
       done();
-    });
+    };
+    testCb.test = true;
+    bot.message(event, lambda.getContextObject(), testCb);
   });
 });
