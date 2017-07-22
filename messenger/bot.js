@@ -14,6 +14,7 @@ const API_VERSION = process.env.FB_API_VERSION || '2.9';
  * @param {object} data
  * @param {function} callback
  * @param {string} method
+ * @return {request.Request}
  */
 function callGraphApi(path, data, callback, method) {
   const params = { access_token: PAGE_ACCESS_TOKEN };
@@ -85,6 +86,7 @@ function sendMessageCb(error, response, body) {
  * send a message to facebook
  * @param {object} messageData
  * @param {function} callback
+ * @return {request.Request}
  */
 function sendMessage(messageData, callback) {
   return callGraphApi('/me/messages', messageData, callback || sendMessageCb, 'POST');
@@ -95,6 +97,7 @@ function sendMessage(messageData, callback) {
  * @param {string} userId
  * @param {string} message
  * @param {function} callback
+ * @return {request.Request}
  */
 function sendTextMessage(userId, message, callback) {
   const msg = {
@@ -105,7 +108,7 @@ function sendTextMessage(userId, message, callback) {
       text: message,
     },
   };
-  sendMessage(msg, callback);
+  return sendMessage(msg, callback);
 }
 
 /**
@@ -113,6 +116,7 @@ function sendTextMessage(userId, message, callback) {
  * @param {string} userId
  * @param {function} callback
  * @return {object}
+ * @return {request.Request}
  */
 function getUserProfile(userId, callback) {
   const params = {
@@ -193,13 +197,25 @@ function identifyUser(userId, callback) {
  */
 function onLexResponse(callback, userId, error, resp) {
   if (error) {
+    logger.error('Lex error:', error);
     const msg = `Lex error: ${error.message || error}`;
     const wrapper = callback ? callback.bind(this, error, resp) : null;
-    sendTextMessage(userId, msg, wrapper);
+    sendTextMessage(userId, msg, wrapper, () => {
+      // invoke callback
+      if (typeof callback === 'function') callback(error, resp);
+    });
   } else {
-    logger.debug('Lex response', resp);
+    logger.info('Lex response:', resp);
     // @todo convert Lex response to Message message
-    if (typeof callback === 'function') callback(error, resp);
+    if (resp.contentType.indexOf('text/plain') === 0) {
+      sendTextMessage(userId, resp.message, (err, res) => {
+        if (err || !res) {
+          logger.error('Failed to send response', err);
+        }
+        // invoke callback
+        if (typeof callback === 'function') callback(error, resp);
+      });
+    }
   }
 }
 

@@ -91,7 +91,7 @@ describe('bot-message', () => {
 
       // verify response
       const resp = response.body;
-      expect(resp.type).to.eq('error'); // @todo: change to equal 'success'
+      expect(resp.type).to.eq('success');
       done();
     };
     testCb.test = true;
