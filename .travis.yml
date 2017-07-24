@@ -6,8 +6,11 @@ services:
   - redis-server
 
 before_script:
-  - echo current directory $(pwd)
-  - sleep 1
+  - echo current directory $TRAVIS_BUILD_DIR
+  - npm install serverless -g
+  - mkdir lexofood_db
+  - sls dynamodb start -d $TRAVIS_BUILD_DIR/lexofood_db/ -m
+  - sleep 5
 
 script:
   - "npm test;"
