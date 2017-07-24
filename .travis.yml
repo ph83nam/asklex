@@ -1,0 +1,23 @@
+language: node_js
+node_js:
+  - "6.1"
+
+services:
+  - redis-server
+
+before_script:
+  - echo current directory $TRAVIS_BUILD_DIR
+  - npm install serverless -g
+  - sls dynamodb install
+  - sls dynamodb start -m &
+  - sleep 10
+
+script:
+  - "npm test;"
+  - "cat coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js"
+
+env:
+  matrix:
+    - COVERAGE=1
+
+sudo: false

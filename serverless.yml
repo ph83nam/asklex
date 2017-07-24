@@ -12,16 +12,16 @@ provider:
   environment:
     DYNAMO_TABLE_PREFIX: ${self:provider.stage}-
     REDIS_URL: { Fn::Join : ["", ["redis://", { Fn::GetAtt : [cacheCluster, "RedisEndpoint.Address"]}, ":", { Fn::GetAtt : [cacheCluster, "RedisEndpoint.Port"]}]]}
-    LEX_BOT_NAME: ${self:custom.config.lexBotName}
-    LEX_BOT_ALIAS: ${self:custom.config.lexBotAlias}
-    GCP_PROJECT_ID: ${self:custom.config.gcpProjectId}
-    GCP_API_KEY: ${self:custom.config.gcpApiKey}
+    LEX_BOT_NAME: ${self:custom.config.lexBotName, env:LEX_BOT_NAME}
+    LEX_BOT_ALIAS: ${self:custom.config.lexBotAlias, env:LEX_BOT_ALIAS}
+    GCP_PROJECT_ID: ${self:custom.config.gcpProjectId, env:GCP_PROJECT_ID}
+    GCP_API_KEY: ${self:custom.config.gcpApiKey, env:GCP_API_KEY}
   iamRoleStatements: # permissions for all of your functions can be set here
     - Effect: Allow
       Action: # Gives permission to invoke Lex Runtime
         - lex:PostContent
         - lex:PostText
-      Resource: "arn:aws:lex:*:*:bot:${self:custom.config.lexBotName}:${self:custom.config.lexBotAlias}"
+      Resource: "arn:aws:lex:*:*:bot:${self:custom.config.lexBotName, env:LEX_BOT_NAME}:${self:custom.config.lexBotAlias, env:LEX_BOT_ALIAS}"
     - Effect: Allow
       Action: # Gives permission to DynamoDB tables in a specific region
         - dynamodb:DescribeTable
@@ -63,9 +63,9 @@ functions:
       - http: post messenger
       - http: get messenger
     environment:
-      FB_VERIFY_TOKEN: ${self:custom.config.fbVerifyToken}
-      FB_PAGE_ACCESS_TOKEN: ${self:custom.config.fbPageAccessToken}
-      FB_API_VERSION: ${self:custom.config.fbApiVersion}
+      FB_VERIFY_TOKEN: ${self:custom.config.fbVerifyToken, env:FB_VERIFY_TOKEN}
+      FB_PAGE_ACCESS_TOKEN: ${self:custom.config.fbPageAccessToken, env:FB_PAGE_ACCESS_TOKEN}
+      FB_API_VERSION: ${self:custom.config.fbApiVersion, "2.9"}
   lex:
     handler: lib/lex.handle
     events:
