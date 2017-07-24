@@ -1,3 +1,5 @@
+import * as lex from '../../lib/lex';
+
 /**
  * return event object payload
  * @param {object|string} bodyData
@@ -31,9 +33,11 @@ function getEventObject(bodyData) {
 
 /**
  * get context object to pass to lamda
+ * @param {string | null} functionName
  * @return {object}
  */
-function getContextObject() {
+function getContextObject(functionName) {
+  const funcName = functionName || 'messengerMessage';
   const maxExecMillis = 30 * 1000;
   const ended = (new Date()).getTime() + maxExecMillis;
   return {
@@ -46,9 +50,9 @@ function getContextObject() {
     done: () => {},
     succeed: () => {},
     fail: () => {},
-    logGroupName: '/aws/lambda/lexofood-dev-messengerMessage',
+    logGroupName: `/aws/lambda/lexofood-dev-${funcName}`,
     logStreamName: '2017/07/16/[$LATEST]709a7ddfce3a4c899eec0ac91e45a349',
-    functionName: 'lexofood-dev-messengerMessage',
+    functionName: `lexofood-dev-${funcName}`,
     memoryLimitInMB: '512',
     functionVersion: '$LATEST',
     getRemainingTimeInMillis: () => {
@@ -58,8 +62,43 @@ function getContextObject() {
     },
     invokeid: 'afab4b5d-69e7-11e7-ac68-a5bb94a50489',
     awsRequestId: 'afab4b5d-69e7-11e7-ac68-a5bb94a50489',
-    invokedFunctionArn: 'arn:aws:lambda:us-east-1:xxxxx:function:lexofood-dev-messengerMessage',
+    invokedFunctionArn: `arn:aws:lambda:us-east-1:xxxxx:function:lexofood-dev-${funcName}`,
+  };
+}
+
+/**
+ * get a lex event
+ * @param {object | null} currentIntent
+ * @param {string | null} uid
+ * @param {object | null} sessionAttrs
+ */
+function getLexEvent(currentIntent, uid, sessionAttrs) {
+  const theUid = uid || process.env.FB_USER_ID || 'xxxxxxxx:FB';
+  return {
+    messageVersion: '1.0',
+    invocationSource: 'FulfillmentCodeHook',
+    userId: theUid,
+    sessionAttributes: sessionAttrs || {
+      userId: theUid,
+      firstName: 'Nam',
+      lastName: 'Pham',
+      gender: 'male',
+    },
+    bot: { name: lex.BOT_NAME, alias: lex.BOT_ALIAS, version: '2' },
+    outputDialogMode: 'Text',
+    currentIntent: currentIntent || {
+      name: 'OrderFood',
+      slots: {
+        number: null,
+        restaurant: 'the Sushi Bar',
+        action: null,
+        food: 'pizza',
+      },
+      confirmationStatus: 'None',
+    },
+    inputTranscript: 'I want pizza from the Sushi Bar',
   };
 }
 
 export { getEventObject, getContextObject };
+export { getLexEvent };

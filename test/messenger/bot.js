@@ -94,7 +94,6 @@ describe('bot-message', () => {
       expect(resp.type).to.eq('success');
       done();
     };
-    testCb.test = true;
     bot.message(event, lambda.getContextObject(), testCb);
   });
 });

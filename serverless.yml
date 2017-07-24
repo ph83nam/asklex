@@ -12,7 +12,16 @@ provider:
   environment:
     DYNAMO_TABLE_PREFIX: ${self:provider.stage}-
     REDIS_URL: { Fn::Join : ["", ["redis://", { Fn::GetAtt : [cacheCluster, "RedisEndpoint.Address"]}, ":", { Fn::GetAtt : [cacheCluster, "RedisEndpoint.Port"]}]]}
+    LEX_BOT_NAME: ${self:custom.config.lexBotName}
+    LEX_BOT_ALIAS: ${self:custom.config.lexBotAlias}
+    GCP_PROJECT_ID: ${self:custom.config.gcpProjectId}
+    GCP_API_KEY: ${self:custom.config.gcpApiKey}
   iamRoleStatements: # permissions for all of your functions can be set here
+    - Effect: Allow
+      Action: # Gives permission to invoke Lex Runtime
+        - lex:PostContent
+        - lex:PostText
+      Resource: "arn:aws:lex:*:*:bot:${self:custom.config.lexBotName}:${self:custom.config.lexBotAlias}"
     - Effect: Allow
       Action: # Gives permission to DynamoDB tables in a specific region
         - dynamodb:DescribeTable
@@ -23,12 +32,6 @@ provider:
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
       Resource: "arn:aws:dynamodb:us-east-1:*:*"
-    - Effect: Allow
-      Action: # Gives permission to attach to a VPC network
-        - ec2:CreateNetworkInterface
-        - ec2:DescribeNetworkInterfaces
-        - ec2:DeleteNetworkInterface
-      Resource: "arn:aws:ec2:us-east-1:*:network-interface/*"
   vpc:
     securityGroupIds:
       - { Ref : lambdaExecSecurityGroup }
@@ -63,34 +66,14 @@ functions:
       FB_VERIFY_TOKEN: ${self:custom.config.fbVerifyToken}
       FB_PAGE_ACCESS_TOKEN: ${self:custom.config.fbPageAccessToken}
       FB_API_VERSION: ${self:custom.config.fbApiVersion}
-  usersCreate:
-    handler: users/handler
+  lex:
+    handler: lib/lex.handle
     events:
-      - http: post users
-  usersGet:
-    handler: users/handler.getUser
-    events:
-      - http: get users
-  usersUpdate:
-    handler: users/handler
-    events:
-      - http: put users
-  usersDelete:
-    handler: users/handler
-    events:
-      - http: delete users
+      - http: post lex
   runCrawler:
     handler: takeaway/crawler.run
     events:
       - schedule: cron(30 0,6,12 * * ? *)
-  saveRestaurant:
-    handler: takeaway/restaurant.save
-    events:
-      - http: post takeaway/restaurants
-  saveFood:
-    handler: takeaway/food.save
-    events:
-      - http: post takeaway/foods
 resources:
   Resources:
     botVpc:
