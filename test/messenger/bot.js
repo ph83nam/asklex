@@ -87,11 +87,11 @@ describe('bot-message', () => {
       expect(error).to.be.null;
       expect(response).not.to.be.empty;
       expect(response.statusCode).to.eq(200);
-      expect(response.body).instanceof(Object);
+      const resObj = JSON.parse(response.body);
+      expect(resObj).instanceof(Object);
 
       // verify response
-      const resp = response.body;
-      expect(resp.type).to.eq('success');
+      expect(resObj.type).to.eq('success');
       done();
     };
     bot.message(event, lambda.getContextObject(), testCb);
