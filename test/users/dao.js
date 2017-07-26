@@ -28,6 +28,14 @@ describe('users/dao', () => {
     });
   });
 
+  // user get error
+  it('#get', (done) => {
+    dao.getUser(null, null, (error) => {
+      expect(error).not.to.be.null;
+      done();
+    });
+  });
+
   // user get NOT_FOUND
   it('#get:NOT_FOUND', (done) => {
     dao.getUser('NOT_SAVED', null, (error) => {
