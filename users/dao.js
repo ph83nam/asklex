@@ -44,10 +44,10 @@ function saveUser(user, callback) {
     const updates = ['updatedAt = :updatedAt'];
     const values = { ':updatedAt': (new Date()).getTime() };
     const ignored = ['createdAt', 'uid'];
-    Object.entries(item).forEach((pair) => {
-      if (pair[1] !== undefined && ignored.indexOf(pair[0]) === -1) {
-        updates.push(`${pair[0]} = :${pair[0]}`);
-        values[`:${pair[0]}`] = pair[1];
+    Object.keys(item).forEach((attr) => {
+      if (Object.prototype.hasOwnProperty.call(item, attr) && ignored.indexOf(attr) === -1) {
+        updates.push(`${attr} = :${attr}`);
+        values[`:${attr}`] = item[attr];
       }
     });
     // invoke update
