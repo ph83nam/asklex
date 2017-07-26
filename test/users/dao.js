@@ -44,12 +44,31 @@ describe('users/dao', () => {
     });
   });
 
+  // user get NOT_FOUND
+  it('#get:eror', (done) => {
+    dao.getUser('', null, (error) => {
+      expect(error).not.to.be.null;
+      done();
+    });
+  });
+
   // user update
   it('#save:update', (done) => {
     user.firstName = 'Updated';
     dao.saveUser(user, (error, success) => {
       expect(error).to.be.null;
       expect(success.Attributes).not.to.be.undefined;
+      done();
+    });
+  });
+
+  it('#save:update error', (done) => {
+    const errorUser = {
+      uid: '',
+      createdAt: 123,
+    };
+    dao.saveUser(errorUser, (error) => {
+      expect(error).not.to.be.null;
       done();
     });
   });
