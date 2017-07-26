@@ -31,6 +31,37 @@ describe('bot', () => {
     });
   });
 
+  it('#sendMessage:no callback', (done) => {
+    const msg = {
+      recipient: {
+        id: FB_USER_ID,
+      },
+      message: {
+        text: 'I called without callback!',
+      },
+    };
+    bot.sendMessage(msg).on('complete', (resp, body) => {
+      expect(resp.statusCode).equal(200);
+      expect(body.message_id).to.not.be.empty;
+      done();
+    });
+  });
+
+  it('#sendMessage:error', (done) => {
+    const msg = {
+      recipient: {
+        id: 'none',
+      },
+      message: {
+        text: 'I called without callback!',
+      },
+    };
+    bot.sendMessage(msg).on('complete', (resp) => {
+      expect(resp.statusCode).equals(400);
+      done();
+    });
+  });
+
   it('#messsage: 403', () => {
     const event = {
       queryStringParameters: {
@@ -95,5 +126,29 @@ describe('bot-message', () => {
       done();
     };
     bot.message(event, lambda.getContextObject(), testCb);
+  });
+
+  // test audio message
+  it('#onMessageEvent:audio', (done) => {
+    const event = {
+      sender: { id: FB_USER_ID },
+      recipient: { id: FB_PAGE_ID },
+      timestamp: (new Date()).getTime() - 1000,
+      message: {
+        mid: 'mid.$cAADGzHNJiWhjetsGQVdSZW9e4HJx',
+        seq: 13219,
+        attachments: [
+          {
+            type: 'audio',
+            url: 'file:/./not_found.mpg',
+          },
+        ],
+      },
+    };
+
+    bot.onMessageEvent(event, (error) => {
+      expect(error).not.to.be.null;
+      done();
+    });
   });
 });
