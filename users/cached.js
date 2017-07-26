@@ -20,7 +20,7 @@ function forceWaitForCache(wait) {
  */
 function cacheUser(user, callback) {
   redis.set(`user:${user.uid}`, JSON.stringify(user), (error, data) => {
-    if (callback) callback(error, data);
+    if (typeof callback === 'function') callback(error, data);
   });
 }
 
