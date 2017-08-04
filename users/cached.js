@@ -2,6 +2,7 @@ import extend from 'extend';
 import * as redis from '../lib/redis';
 import logger from '../lib/log';
 import * as dao from './dao';
+import util from '../lib/util';
 
 let waitForCache = false;
 
@@ -20,7 +21,7 @@ function forceWaitForCache(wait) {
  */
 function cacheUser(user, callback) {
   redis.set(`user:${user.uid}`, JSON.stringify(user), (error, data) => {
-    if (callback) callback(error, data);
+    util.invoke(callback, error, data);
   });
 }
 
@@ -43,10 +44,10 @@ function getUser(userId, platform, callback) {
           cacheUser(dat);
         }
         // invoke callback
-        callback(err, dat);
+        util.invoke(callback, err, dat);
       });
     } else {
-      callback(error, JSON.parse(data));
+      util.invoke(callback, error, JSON.parse(data));
     }
   });
 }
@@ -68,7 +69,7 @@ function saveUser(user, callback) {
     }
 
     // invoke callback if not waiting for cache
-    if (!waitForCache) callback(error, data);
+    if (!waitForCache) util.invoke(callback, error, data);
   });
 }
 

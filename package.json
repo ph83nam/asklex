@@ -24,6 +24,7 @@
         "chai-as-promised": "^6.0.0",
         "coffee-script": "1.12.4",
         "coveralls": "^2.13.1",
+        "dotenv": "^4.0.0",
         "eslint": "^3.3.1",
         "eslint-config-airbnb": "^10.0.1",
         "eslint-config-airbnb-base": "^5.0.2",
@@ -52,8 +53,8 @@
     "scripts": {
         "test": "npm run lint && npm run coveralls",
         "lint": "eslint lib messenger takeaway users test --cache",
-        "coveralls": "nyc --reporter=lcov --reporter=text _mocha --compilers js:babel-core/register -- test/** && cat coverage/lcov.info | coveralls",
-        "unit": "nyc mocha --compilers js:babel-core/register -- test/**",
+        "coveralls": "nyc --reporter=lcov --reporter=text _mocha --timeout 4000 --compilers js:babel-core/register -- test/** && cat coverage/lcov.info | coveralls",
+        "unit": "nyc mocha --timeout 4000 --compilers js:babel-core/register -- test/**",
         "debug": "node-debug -c -p 3031 sls offline start"
     },
     "nyc": {

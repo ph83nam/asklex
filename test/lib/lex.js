@@ -116,4 +116,16 @@ describe('lex.handle', () => {
       done();
     });
   });
+
+  it('#getLexContentParams: text and update locale', (done) => {
+    const user = {
+      uid: 'lexContextParams',
+      createdAt: 123,
+    };
+    lex.getLexContentParams(user, 'text', 'What do you say?', (err, res) => {
+      expect(err).to.be.null;
+      expect(res).not.to.be.null;
+      done();
+    });
+  });
 });

@@ -28,10 +28,26 @@ describe('users/dao', () => {
     });
   });
 
+  // user get error
+  it('#get', (done) => {
+    dao.getUser(null, null, (error) => {
+      expect(error).not.to.be.null;
+      done();
+    });
+  });
+
   // user get NOT_FOUND
   it('#get:NOT_FOUND', (done) => {
     dao.getUser('NOT_SAVED', null, (error) => {
       expect(error).to.equal('NOT_FOUND');
+      done();
+    });
+  });
+
+  // user get NOT_FOUND
+  it('#get:eror', (done) => {
+    dao.getUser('', null, (error) => {
+      expect(error).not.to.be.null;
       done();
     });
   });
@@ -42,6 +58,17 @@ describe('users/dao', () => {
     dao.saveUser(user, (error, success) => {
       expect(error).to.be.null;
       expect(success.Attributes).not.to.be.undefined;
+      done();
+    });
+  });
+
+  it('#save:update error', (done) => {
+    const errorUser = {
+      uid: '',
+      createdAt: 123,
+    };
+    dao.saveUser(errorUser, (error) => {
+      expect(error).not.to.be.null;
       done();
     });
   });

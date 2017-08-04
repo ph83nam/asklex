@@ -355,3 +355,4 @@ function onMessage(event, context, callback) {
 
 export { onMessage as message };
 export { callGraphApi, getUserProfile, sendMessage, sendTextMessage };
+export { onLexResponse, onMessageEvent };
