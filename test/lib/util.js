@@ -9,6 +9,6 @@ describe('lib/util', () => {
   });
 
   it('#invoke:string', () => {
-    util.invoke('');
+    util.invoke('string');
   });
 });
