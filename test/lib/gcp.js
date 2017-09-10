@@ -1,9 +1,12 @@
+/* eslint-env mocha */
+/* eslint-disable func-names, prefer-arrow-callback */
+
 import { expect } from 'chai';
 import * as gcp from '../../lib/gcp';
 import logger from '../../lib/log';
 
-describe('translation', () => {
-  it('should be able to translate and detect VN', (done) => {
+describe('translation', function () {
+  it('should be able to translate and detect VN', function (done) {
     const text = 'Tôi muốn ăn pizza';
     gcp.translate(text, {
       to: 'en',

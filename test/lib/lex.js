@@ -1,9 +1,12 @@
+/* eslint-env mocha */
+/* eslint-disable func-names, prefer-arrow-callback */
+
 import { expect } from 'chai';
 import { getLexEvent, getContextObject } from './lambda';
 import * as lex from '../../lib/lex';
 
-describe('lex.handle', () => {
-  it('AskRestaurant', (done) => {
+describe('lex.handle', function () {
+  it('AskRestaurant', function (done) {
     const intent = {
       name: 'AskRestaurant',
       slots: {
@@ -20,7 +23,7 @@ describe('lex.handle', () => {
     });
   });
 
-  it('ChooseRestaurant', (done) => {
+  it('ChooseRestaurant', function (done) {
     const intent = {
       name: 'ChooseRestaurant',
       slots: {
@@ -37,7 +40,7 @@ describe('lex.handle', () => {
     });
   });
 
-  it('AskFood', (done) => {
+  it('AskFood', function (done) {
     const intent = {
       name: 'AskFood',
       slots: {
@@ -53,7 +56,7 @@ describe('lex.handle', () => {
     });
   });
 
-  it('OrderFood', (done) => {
+  it('OrderFood', function (done) {
     const intent = {
       name: 'OrderFood',
       slots: {
@@ -72,7 +75,7 @@ describe('lex.handle', () => {
     });
   });
 
-  it('ReviewOrder', (done) => {
+  it('ReviewOrder', function (done) {
     const intent = {
       name: 'ReviewOrder',
       slots: {
@@ -87,7 +90,7 @@ describe('lex.handle', () => {
     });
   });
 
-  it('PlaceOrder', (done) => {
+  it('PlaceOrder', function (done) {
     const intent = {
       name: 'PlaceOrder',
       slots: {
@@ -102,7 +105,7 @@ describe('lex.handle', () => {
     });
   });
 
-  it('NoIdea', (done) => {
+  it('NoIdea', function (done) {
     const intent = {
       name: 'NoIdea',
       slots: {
@@ -117,7 +120,7 @@ describe('lex.handle', () => {
     });
   });
 
-  it('#getLexContentParams: text and update locale', (done) => {
+  it('#getLexContentParams: text and update locale', function (done) {
     const user = {
       uid: 'lexContextParams',
       createdAt: 123,

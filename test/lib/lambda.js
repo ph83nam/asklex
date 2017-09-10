@@ -1,3 +1,6 @@
+/* eslint-env mocha */
+/* eslint-disable func-names, prefer-arrow-callback */
+
 import * as lex from '../../lib/lex';
 
 /**
