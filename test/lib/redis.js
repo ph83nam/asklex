@@ -1,14 +1,17 @@
+/* eslint-env mocha */
+/* eslint-disable func-names, prefer-arrow-callback */
+
 import redis from 'redis';
 import { expect } from 'chai';
 import * as libRedis from '../../lib/redis';
 
-describe('lib/redis', () => {
+describe('lib/redis', function () {
   const timestamp = (new Date()).getTime();
   const key = `key${timestamp}`;
   const value = `value${timestamp}`;
 
   // test set cache
-  it('should set cache', (done) => {
+  it('should set cache', function (done) {
     libRedis.set(key, value).then(() => {
       done();
     }).catch((error) => {
@@ -17,7 +20,7 @@ describe('lib/redis', () => {
   });
 
   // test get cache
-  it('should get cache', (done) => {
+  it('should get cache', function (done) {
     libRedis.get(key).then((result) => {
       expect(result).to.equal(value, 'cache value was not retrieved');
       done();
@@ -27,7 +30,7 @@ describe('lib/redis', () => {
   });
 
   // test error handling
-  it('should not throw error for NR_CLOSED', () => {
+  it('should not throw error for NR_CLOSED', function () {
     const error = new redis.AggregateError({
       errors: [1, 2],
       code: 'NR_CLOSED',
@@ -36,7 +39,7 @@ describe('lib/redis', () => {
   });
 
   // test error handling
-  it('should throw error if not NR_CLOSED', () => {
+  it('should throw error if not NR_CLOSED', function () {
     const testFn = () => {
       const error = new redis.AggregateError({
         errors: [1, 2],
