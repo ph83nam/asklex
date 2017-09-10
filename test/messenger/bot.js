@@ -1,3 +1,6 @@
+/* eslint-env mocha */
+/* eslint-disable func-names, prefer-arrow-callback */
+
 import { expect } from 'chai';
 import * as bot from '../../messenger/bot';
 import * as lambda from '../lib/lambda';
@@ -6,8 +9,8 @@ const FB_USER_ID = process.env.FB_USER_ID;
 const FB_PAGE_ID = process.env.FB_PAGE_ID;
 const FB_VERIFY_TOKEN = process.env.FB_VERIFY_TOKEN;
 
-describe('bot', () => {
-  it('#getUserProfile', (done) => {
+describe('bot', function () {
+  it('#getUserProfile', function (done) {
     bot.getUserProfile(FB_USER_ID, (error, success) => {
       expect(error).to.be.null;
       expect(success).to.haveOwnProperty('firstName');
@@ -15,7 +18,7 @@ describe('bot', () => {
     });
   });
 
-  it('#sendMessage', (done) => {
+  it('#sendMessage', function (done) {
     const msg = {
       recipient: {
         id: FB_USER_ID,
@@ -31,7 +34,7 @@ describe('bot', () => {
     });
   });
 
-  it('#sendMessage:no callback', (done) => {
+  it('#sendMessage:no callback', function (done) {
     const msg = {
       recipient: {
         id: FB_USER_ID,
@@ -47,7 +50,7 @@ describe('bot', () => {
     });
   });
 
-  it('#sendMessage:error', (done) => {
+  it('#sendMessage:error', function (done) {
     const msg = {
       recipient: {
         id: 'none',
@@ -62,7 +65,7 @@ describe('bot', () => {
     });
   });
 
-  it('#messsage: 403', () => {
+  it('#messsage: 403', function () {
     const event = {
       queryStringParameters: {
         'hub.mode': 'subscribe',
@@ -75,7 +78,7 @@ describe('bot', () => {
     });
   });
 
-  it('#messsage:subscribe', () => {
+  it('#messsage:subscribe', function () {
     const event = {
       queryStringParameters: {
         'hub.mode': 'subscribe',
@@ -92,8 +95,8 @@ describe('bot', () => {
 });
 
 // test real message pageload
-describe('bot-message', () => {
-  it('hi', (done) => {
+describe('bot-message', function () {
+  it('hi', function (done) {
     const body = {
       object: 'page',
       entry: [{
@@ -129,7 +132,7 @@ describe('bot-message', () => {
   });
 
   // test audio message
-  it('#onMessageEvent:audio', (done) => {
+  it('#onMessageEvent:audio', function (done) {
     const event = {
       sender: { id: FB_USER_ID },
       recipient: { id: FB_PAGE_ID },

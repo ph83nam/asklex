@@ -1,11 +1,18 @@
+/* eslint-env mocha */
+/* eslint-disable func-names, prefer-arrow-callback */
+
 import { expect } from 'chai';
 import * as cached from '../../users/cached';
 import * as redis from '../../lib/redis';
 
-describe('users/cached', () => {
+describe('users/cached', function () {
   // configure library with hooks
-  before(() => cached.forceWaitForCache(true));
-  after(() => cached.forceWaitForCache(false));
+  before(function () {
+    cached.forceWaitForCache(true);
+  });
+  after(function () {
+    cached.forceWaitForCache(false);
+  });
 
   const userId = `${(new Date()).getTime()}`.split('').reverse().join('');
 
@@ -19,7 +26,7 @@ describe('users/cached', () => {
   const key = ['user:', userId].join('');
 
   // user create
-  it('#save:create', (done) => {
+  it('#save:create', function (done) {
     cached.saveUser(user, (error, success) => {
       expect(error).to.be.null;
       expect(success).not.to.be.null;
@@ -28,7 +35,7 @@ describe('users/cached', () => {
   });
 
   // verify cache
-  it('#get', (done) => {
+  it('#get', function (done) {
     let retrieved;
     let stored;
 
