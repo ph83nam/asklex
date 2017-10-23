@@ -1,8 +1,11 @@
 import Crawler from 'simplecrawler';
 import cheerio from 'cheerio';
+import request from 'request';
 import extend from 'extend';
 import log from '../lib/log';
 import util from '../lib/util';
+
+const BASE_URL = process.env.TAKEAWAY_URL || 'https://www.vietnammm.com';
 
 /**
  * mapping from uri to area data
@@ -23,6 +26,11 @@ const restaurantMap = {};
  * mapping from id to food data
  */
 const foodMap = {};
+
+/**
+ * queue of sidedishes
+ */
+const sidedishes = [];
 
 /**
  * parse html content
@@ -88,6 +96,63 @@ function parseSubAreaPage($, contextUri) {
 }
 
 /**
+ * fetch sidedishes data from server
+ * @param {object} food
+ * @param {function} callback
+ */
+function fetchSideDishesData(food, callback) {
+  const opts = {
+    uri: `${BASE_URL}/en/xHttp/showSidedishes.php`,
+    method: 'POST',
+    form: {
+      action: 'add',
+      product: food.id,
+      domid: food.domId,
+      menucat: food.menucat,
+      rest: food.rest,
+    },
+  };
+  request(opts, (err, httpResponse, body) => {
+    if (err) {
+      log.error('Failed to fetch sidedishes', food.name, food.id, err);
+    } else {
+      const f = food;
+      f.choices = {};
+      try {
+        const $ = cheerio.load(body);
+        $('div.sidedish.sidedish-select option').each((index, element) => {
+          f.choices[element.attribs.value] = element.firstChild.nodeValue;
+        });
+        // @todo save food
+        log.info('fetched sidedishes', food.name, food.id, food.choice, food.choices);
+      } catch (ex) {
+        log.error('Failed to parse sidedishes data', ex);
+      }
+    }
+    util.invoke(callback, food, err);
+  });
+}
+
+/**
+ * fetch data from /en/xHttp/showSidedishes.php
+ * @param {object} food
+ * @param {object|undefined} error
+ */
+function fetchSideDishes(food, error) {
+  if (error === undefined) {
+    // queue the function
+    sidedishes.push(food);
+  } else {
+    // callback by fetchSideDishesData
+    sidedishes.splice(0, 1);
+  }
+
+  if ((error !== undefined && sidedishes.length) || sidedishes.length === 1) {
+    fetchSideDishesData(sidedishes[0], fetchSideDishes);
+  }
+}
+
+/**
  * parse html
  * ```
  *   url: /en/xHttp/showSidedishes.php
@@ -124,6 +189,8 @@ function parseRestaurantPage($, restaurant) {
         name: $('span.meal-name', mealElement).text().trim(),
         description: $('*[itemprop="description"]', mealElement).text().trim(),
         choice: $('.meal-description-choose-from', mealElement).text().trim(),
+        menucat: $('input[name="menucat"]', mealElement).val().trim(),
+        rest: $('input[name="rest"]', mealElement).val().trim(),
         shop: restaurant,
         category: categoryName,
         restriction: timeRestriction,
@@ -131,6 +198,12 @@ function parseRestaurantPage($, restaurant) {
       if (food.id && food.name) {
         foodMap[food.id] = food;
         log.debug('parsed food', food.name, food.id);
+        if (food.choice) {
+          // fetch sidedishes data
+          fetchSideDishes(food);
+        } else {
+          // @todo save food
+        }
       } else {
         log.warn('failed to parse food', mealElement);
       }
@@ -181,7 +254,7 @@ function onFetchComplete(queueItem, responseBuffer, response) {
  * @param {object} options
  */
 function crawl(options) {
-  const crawler = new Crawler(options.initialUrl || 'https://www.vietnammm.com/en/order-takeaway');
+  const crawler = new Crawler(options.initialUrl || (`${BASE_URL}/en/order-takeaway`));
   crawler.interval = options.interval || 3000; // 3 seconds
   crawler.maxConcurrency = options.maxConcurrency || 2;
   crawler.maxDepth = options.maxDepth || 4;
