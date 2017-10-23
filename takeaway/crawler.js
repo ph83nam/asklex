@@ -311,9 +311,9 @@ function init(options) {
     restaurants: restaurantMap,
     foods: foodMap,
   };
-  Object.entries(mappables).forEach(([name, values]) => {
-    if (options[name] && values) {
-      extend(values, options[name]);
+  Object.keys(mappables).forEach((name) => {
+    if (options[name] && mappables[name]) {
+      extend(mappables[name], options[name]);
     }
   });
 }
