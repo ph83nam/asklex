@@ -20,7 +20,28 @@ describe('lib/restaurant', function () {
     });
   });
 
+  it('#get:success', function (done) {
+    if (!entity.createdAt) this.skip();
+    dao.getRestaurant(entity.rid, (err, data) => {
+      expect(err).to.be.null;
+      expect(data).not.to.be.null;
+      ['rid', 'name', 'address'].forEach((field) => {
+        expect(data[field]).equal(entity[field]);
+      });
+      done(err);
+    });
+  });
+
+  it('#get:notfound', function (done) {
+    if (!entity.createdAt) this.skip();
+    dao.getRestaurant(`${entity.rid}-notfound`, (err) => {
+      expect(err).equal('NOT_FOUND');
+      done();
+    });
+  });
+
   it('#save:update', function (done) {
+    if (!entity.createdAt) this.skip();
     const update = {
       rid: entity.rid,
       name: 'Updated test restaurant',
