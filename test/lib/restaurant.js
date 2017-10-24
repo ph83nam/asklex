@@ -44,7 +44,7 @@ describe('lib/restaurant', function () {
     if (!entity.createdAt) this.skip();
     const update = {
       rid: entity.rid,
-      name: 'Updated test restaurant',
+      name: 'New test restaurant',
       createdAt: entity.createdAt,
     };
     dao.saveRestaurant(update, (err, data) => {
@@ -53,6 +53,44 @@ describe('lib/restaurant', function () {
       const attrs = data.Attributes;
       expect(attrs).not.empty;
       expect(attrs.name).to.equal(update.name);
+      done();
+    });
+  });
+
+  it('#putRestaurant:insert', function (done) {
+    const saveData = {
+      rid: `${entity.rid}-putNew`,
+      name: 'Updated test restaurant',
+      createdAt: entity.createdAt,
+    };
+    dao.putRestaurant(saveData, (err, data) => {
+      expect(err).to.be.null;
+      expect(data).not.null;
+      const attrs = data.Attributes;
+      expect(attrs).not.empty;
+      expect(attrs.name).to.equal(saveData.name);
+      done();
+    });
+  });
+
+  it('#putRestaurant:update', function (done) {
+    if (!entity.createdAt) this.skip();
+    entity.category = 'Popular';
+    dao.putRestaurant(entity, (err, data) => {
+      expect(err).to.be.null;
+      expect(data).not.null;
+      const attrs = data.Attributes;
+      expect(attrs).not.empty;
+      expect(attrs.category).to.equal(entity.category);
+      done();
+    });
+  });
+
+  it('#putRestaurant:error', function (done) {
+    if (!entity.createdAt) this.skip();
+    entity.parent = entity;
+    dao.putRestaurant(entity, (err) => {
+      expect(err).not.null;
       done();
     });
   });
