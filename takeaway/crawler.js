@@ -113,7 +113,7 @@ function fetchSideDishesData(food, callback) {
     },
   };
   request(opts, (err, httpResponse, body) => {
-    if (err) {
+    if (err) /* istanbul ignore next */ {
       log.error('Failed to fetch sidedishes', food.name, food.id, err);
     } else {
       const f = food;
@@ -125,7 +125,7 @@ function fetchSideDishesData(food, callback) {
         });
         // @todo save food
         log.info('fetched sidedishes', food.name, food.id, food.choice, food.choices);
-      } catch (ex) {
+      } catch (ex) /* istanbul ignore next */ {
         log.error('Failed to parse sidedishes data', ex);
       }
     }
@@ -195,6 +195,7 @@ function parseRestaurantPage($, restaurant) {
         category: categoryName,
         restriction: timeRestriction,
       };
+      /* istanbul ignore else */
       if (food.id && food.name) {
         foodMap[food.id] = food;
         log.debug('parsed food', food.name, food.id);
@@ -243,7 +244,7 @@ function onFetchComplete(queueItem, responseBuffer, response) {
       } else {
         parseAreaPage($, uri);
       }
-    } catch (ex) {
+    } catch (ex) /* istanbul ignore next */ {
       log.error('failed to parse html from ', queueItem.url, ex);
     }
   }

@@ -2,7 +2,11 @@
 /* eslint-disable func-names, prefer-arrow-callback */
 
 import { expect } from 'chai';
-import { init as initCrawler, crawl as runCrawler } from '../../takeaway/crawler';
+import {
+  init as initCrawler,
+  default as executeCrawler,
+  crawl as runCrawler,
+} from '../../takeaway/crawler';
 
 describe('takeaway/crawler', function () {
   it('#crawl:area', function (done) {
@@ -73,11 +77,20 @@ describe('takeaway/crawler', function () {
       initialUrl: 'https://www.vietnammm.com/en/italia-pizza-pasta',
       interval: 1000,
       maxConcurrency: 3,
-      maxDepth: 1,
+      maxDepth: 2,
       callback: (err) => {
         expect(err).to.be.undefined;
         done(err);
       },
+    });
+  });
+
+  it('#run', function (done) {
+    process.env.TAKEAWAY_URL = 'https://www.vietnammm.com/en/order-takeaway';
+    process.env.TAKEAWAY_MAX_DEPTH = 1;
+    executeCrawler(null, null, (err) => {
+      expect(err).to.be.undefined;
+      done(err);
     });
   });
 });
